@@ -13,6 +13,7 @@ class StateManager(object):
 
         if state == 'Available' and cls.STATE != 'Available':
             # TODO - send email/smsg alert
+            pass
         
         cls.STATE = state
         
