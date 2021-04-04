@@ -1,9 +1,11 @@
 from requests_html import HTMLSession
-import sys
 import time
 import smtplib
 import base64
 import json
+import os
+
+from src.state_manager import StateManager
 
 TURBO_VAX_URL = "https://www.turbovax.info/"
 #"tkobil17@gmail.com"
@@ -11,20 +13,23 @@ TURBO_VAX_URL = "https://www.turbovax.info/"
 sender = 'nycvaccinebot@gmail.com'
 #receivers = ['rdevlin.mail@gmail.com']
 
-def check_availability():
-    session = HTMLSession()
-    r = session.get(TURBO_VAX_URL)
-    r.html.render()
-    pg = r.html.text
-    availability = r.html.xpath('//*[@id="root"]/div/div[2]/div/div[3]/div[1]/div/div/div/div[2]/div/p')[0].full_text
-    print(pg)
+def poll_availability():
+    while True:
+        try:
+            session = HTMLSession()
+            response = session.get(TURBO_VAX_URL)
+            wait = response.html.render()
+            pg = response.html.text
+            availability = response.html.xpath('//*[@id="root"]/div/div[2]/div/div[3]/div[1]/div/div/div/div[2]/div/p')[0].full_text
+            print(availability)
+            # TODO - StateManager.set_state(state) (state = 'Available' or 'Not Available')
+            session.close()
+            time.sleep(15)
 
-    #send_email()
+        except KeyboardInterrupt:
+            session.close()
+            sys.exit()
 
-    if 'Not Available' in availability:
-        return False
-    
-    return True
 
 def send_email(account, password, receivers, subject, body):
     # Assumes password is base64 encoded
@@ -60,7 +65,7 @@ if __name__ == "__main__":
      body = "New appointments for the covid vaccine are available at CVS! Schedule them here: <link_to_cvs_website>"
      #send_email(data['username'], data['password'], data['receivers'], subject, body)
 
-     check_availability()
+     poll_availability()
 """
     while True:
         try:
