@@ -8,15 +8,7 @@ def email(account, password, receivers, subject, body):
     # Assumes password is base64 encoded
     decode_pass = base64.b64decode(password).decode("utf-8")
 
-    #FROM = account
-    #TO = receivers
-    #SUBJECT = subject
-    #TEXT = body
-
-
-    # Create message container - the correct MIME type is multipart/alternative.
-    #msg = MIMEMultipart('alternative')
-    msg = message.Message()
+    msg = message.EmailMessage()
     msg['Subject'] = subject
     msg['From'] = account
     msg['To'] = receivers
