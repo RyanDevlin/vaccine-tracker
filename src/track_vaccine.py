@@ -1,19 +1,88 @@
-from requests_html import HTMLSession
-import time
-import smtplib
-import base64
+import hashlib
 import json
 import os
+import sys
+import time
 
+from requests_html import HTMLSession
+from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
+
+from src.email_alert import email
 from src.state_manager import StateManager
 
 TURBO_VAX_URL = "https://www.turbovax.info/"
 #"tkobil17@gmail.com"
 
-sender = 'nycvaccinebot@gmail.com'
+#sender = 'nycvaccinebot@gmail.com'
 #receivers = ['rdevlin.mail@gmail.com']
 
+class VaccinationSite(object):
+    empCount = 0
+    def __init__(self, name, neighborhood, numAvailable, time):
+        self.name = name
+        self.neighborhood = neighborhood
+        self.time = time # Formatted like Apr 8 - 1:15PM
+        self.numAvailable = numAvailable
+    def availability(self):
+        return("{} in {} currently has {} appointment(s) available at {}".format(self.name,self.neighborhood,self.numAvailable, self.time))
+
+def determineState(sites):
+    with open("config.json",'r') as fh:
+        data = fh.read()
+        data = json.loads(data)
+        subject = "New Vaccine Appointments!"
+        aggregateHash = ""
+        body = "<p><b>Vaccination Sites Availabile:</b><br>Schedule on <a href=\"" + data['endpoint']['link'] + "\">" + data['endpoint']['name'] + "</a><br>"
+        for site in sites:
+            line = site.availability()
+            body += line + "<br><br>"
+            hashVal = hashlib.sha1(repr(line).encode('utf-8'))
+            aggregateHash += hashVal.hexdigest()
+        body + "</p>"
+        result = hashlib.sha1(repr(aggregateHash).encode('utf-8'))
+        state = result.hexdigest()
+
+        #send_email(data['username'], data['password'], data['receivers'], subject, body)
+        StateManager.set_state(state,lambda: email(data['username'], data['password'], data['receivers'], subject, body))
+    print("STATE: ", StateManager.State)
+
 def poll_availability():
+    # create webdriver object
+    options = Options()
+    options.headless = True
+    driver = webdriver.Firefox(options=options)
+
+    while True:
+        try:
+            # get google.co.in
+            driver.get(TURBO_VAX_URL)
+            result = driver.find_element_by_css_selector('div.MuiBox-root.jss14')
+            status = result.text.replace('(', '') 
+            status = result.text.replace(')', '')
+            print(status.split(" "))
+
+            # If not not available, continue loop
+            if status.split(" ")[1] == "Not":
+                time.sleep(5)
+                continue
+
+            results = driver.find_elements_by_css_selector('div.MuiCardContent-root.jss39')
+            sites = []
+            # Build object for each location with availability
+            for item in results:
+                data = item.text.splitlines()
+                
+                site = VaccinationSite(data[0].strip(), data[1].strip(), data[2].split("·")[1].strip().split(" ")[0], data[3].strip().replace('–', '-'))
+                sites.append(site)
+            
+            determineState(sites)
+            time.sleep(5)
+        except KeyboardInterrupt:
+            driver.quit()
+            sys.exit()
+    
+    """
     while True:
         try:
             session = HTMLSession()
@@ -24,48 +93,22 @@ def poll_availability():
             print(availability)
             # TODO - StateManager.set_state(state) (state = 'Available' or 'Not Available')
             session.close()
-            time.sleep(15)
+            time.sleep(5)
 
         except KeyboardInterrupt:
             session.close()
             sys.exit()
-
-
-def send_email(account, password, receivers, subject, body):
-    # Assumes password is base64 encoded
-    decode_pass = base64.b64decode(password).decode("utf-8")
-    print(decode_pass)
-
-    FROM = account
-    TO = receivers
-    SUBJECT = subject
-    TEXT = body
-
-    # Prepare actual message
-    message = """From: %s\nTo: %s\nSubject: %s\n\n%s
-    """ % (FROM, ", ".join(TO), SUBJECT, TEXT)
-    try:
-        server = smtplib.SMTP("smtp.gmail.com", 587)
-        server.ehlo()
-        server.starttls()
-        server.login(account, decode_pass)
-        server.sendmail(FROM, TO, message)
-        server.close()
-        print('successfully sent the mail')
-    except Exception as e:
-        print("failed to send mail")
-        print(e)
-
+    """
 
 if __name__ == "__main__":
     with open("config.json",'r') as fh:
-     data = fh.read()
-     data = json.loads(data)
-     subject = "New Vaccine Appointments!"
-     body = "New appointments for the covid vaccine are available at CVS! Schedule them here: <link_to_cvs_website>"
-     #send_email(data['username'], data['password'], data['receivers'], subject, body)
+        data = fh.read()
+        data = json.loads(data)
+        subject = "New Vaccine Appointments!"
+        body = "New appointments for the covid vaccine are available at CVS! Schedule them here: <link_to_cvs_website>"
+        #send_email(data['username'], data['password'], data['receivers'], subject, body)
 
-     poll_availability()
+        poll_availability()
 """
     while True:
         try:
