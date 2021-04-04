@@ -14,29 +14,29 @@ from src.state_manager import StateManager
 TURBO_VAX_URL = "https://www.turbovax.info/"
 
 class VaccinationSite(object):
-    empCount = 0
     def __init__(self, name, neighborhood, numAvailable, time):
         self.name = name
         self.neighborhood = neighborhood
         self.time = time # Formatted like Apr 8 - 1:15PM
         self.numAvailable = numAvailable
     def availability(self):
-        return("{} in {} currently has {} appointment(s) available at {}".format(self.name,self.neighborhood,self.numAvailable, self.time))
+        print("{} in {} currently has appointment(s) available".format(self.name,self.neighborhood))
+        return("{} in {} currently has appointment(s) available".format(self.name,self.neighborhood))
 
 def determineState(sites):
     with open("config.json",'r') as fh:
         data = fh.read()
         data = json.loads(data)
         subject = "New Vaccine Appointments!"
-        aggregateHash = ""
-        body = "<p><b>Vaccination Sites Availabile:</b><br>Schedule on <a href=\"" + data['endpoint']['link'] + "\">" + data['endpoint']['name'] + "</a><br>"
+        #aggregateHash = ""
+        body = "<p><b>Vaccination Sites Availabile:</b><br>Schedule on <a href=\"" + data['endpoint']['link'] + "\">" + data['endpoint']['name'] + "</a><br><br>"
         for site in sites:
             line = site.availability()
             body += line + "<br><br>"
-            hashVal = hashlib.sha1(repr(line).encode('utf-8'))
-            aggregateHash += hashVal.hexdigest()
+            #hashVal = hashlib.sha1(repr(line).encode('utf-8'))
+            #aggregateHash += hashVal.hexdigest()
         body + "</p>"
-        result = hashlib.sha1(repr(aggregateHash).encode('utf-8'))
+        result = hashlib.sha1(repr(body).encode('utf-8'))
         state = result.hexdigest()
 
         #send_email(data['username'], data['password'], data['receivers'], subject, body)
@@ -53,6 +53,7 @@ def poll_availability():
         try:
             # get google.co.in
             driver.get(TURBO_VAX_URL)
+            time.sleep(0.2) # Need a fraction of a second for the page to execute js 
             result = driver.find_element_by_css_selector('div.MuiBox-root.jss14')
             status = result.text.replace('(', '') 
             status = result.text.replace(')', '')
@@ -69,7 +70,7 @@ def poll_availability():
             for item in results:
                 data = item.text.splitlines()
                 
-                site = VaccinationSite(data[0].strip(), data[1].strip(), data[2].split("·")[1].strip().split(" ")[0], data[3].strip().replace('–', '-'))
+                site = VaccinationSite(data[0].strip().replace('–', '-'), data[1].strip().replace('–', '-'), data[2].split("·")[1].strip().split(" ")[0].replace('–', '-'), data[3].strip().replace('–', '-'))
                 sites.append(site)
             
             determineState(sites)
