@@ -28,15 +28,15 @@ def determineState(sites):
         data = fh.read()
         data = json.loads(data)
         subject = "New Vaccine Appointments!"
-        #aggregateHash = ""
+        aggregateHash = ""
         body = "<p><b>Vaccination Sites Availabile:</b><br>Schedule on <a href=\"" + data['endpoint']['link'] + "\">" + data['endpoint']['name'] + "</a><br><br>"
         for site in sites:
             line = site.availability()
             body += line + "<br><br>"
-            #hashVal = hashlib.sha1(repr(line).encode('utf-8'))
-            #aggregateHash += hashVal.hexdigest()
+            hashVal = hashlib.sha1(repr(line).encode('utf-8'))
+            aggregateHash += hashVal.hexdigest()
         body + "</p>"
-        result = hashlib.sha1(repr(body).encode('utf-8'))
+        result = hashlib.sha1(repr(aggregateHash).encode('utf-8'))
         state = result.hexdigest()
 
         #send_email(data['username'], data['password'], data['receivers'], subject, body)
