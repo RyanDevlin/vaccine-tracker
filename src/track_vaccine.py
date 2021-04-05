@@ -23,6 +23,9 @@ class VaccinationSite(object):
 
     def __str__(self):
         return("{} in {} currently has appointment(s) available".format(self.name,self.neighborhood))
+    
+    def __eq__(self, other):
+        return self.name == other.name
 
 def determineState(sites):
     with open("config.json",'r') as fh:
@@ -32,17 +35,8 @@ def determineState(sites):
         subject = "New Vaccine Appointments!"
         aggregateHash = ""
         body = "<p><b>Vaccination Sites Availabile:</b><br>Schedule on <a href=\"" + data['endpoint']['link'] + "\">" + data['endpoint']['name'] + "</a><br><br>"
-        for site in sites:
-            line = str(site)
-            body += line + "<br><br>"
-            hashVal = hashlib.sha1(repr(line).encode('utf-8'))
-            aggregateHash += hashVal.hexdigest()
-        body + "</p>"
-        result = hashlib.sha1(repr(aggregateHash).encode('utf-8'))
-        state = result.hexdigest()
 
-        #send_email(data['username'], data['password'], data['receivers'], subject, body)
-        StateManager.set_state(state,lambda: email(data['username'], data['password'], data['receivers'], subject, body))
+        StateManager.set_state(sites,lambda: email(data['username'], data['password'], data['receivers'], subject, body))
     print("STATE: ", StateManager.State)
 
 def poll_availability():
