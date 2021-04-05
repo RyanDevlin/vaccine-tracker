@@ -32,7 +32,10 @@ def determineState(sites):
         data = json.loads(data)
         subject = "New Vaccine Appointments!"
         body = "<p><b>Vaccination Sites Availabile:</b><br>Schedule on <a href=\"" + data['endpoint']['link'] + "\">" + data['endpoint']['name'] + "</a><br><br>"
-
+       
+        for site in sites:
+            body += str(site) + "<br><br>"
+        body + "</p>"
         StateManager.set_state(sites,lambda: email(data['username'], data['password'], data['receivers'], subject, body))
 
 def poll_availability():
