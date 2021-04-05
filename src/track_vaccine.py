@@ -4,6 +4,7 @@ import os
 import sys
 import time
 
+import geckodriver_autoinstaller
 from requests_html import HTMLSession
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
@@ -19,19 +20,20 @@ class VaccinationSite(object):
         self.neighborhood = neighborhood
         self.time = time # Formatted like Apr 8 - 1:15PM
         self.numAvailable = numAvailable
-    def availability(self):
-        print("{} in {} currently has appointment(s) available".format(self.name,self.neighborhood))
+
+    def __str__(self):
         return("{} in {} currently has appointment(s) available".format(self.name,self.neighborhood))
 
 def determineState(sites):
     with open("config.json",'r') as fh:
         data = fh.read()
+        print(data)
         data = json.loads(data)
         subject = "New Vaccine Appointments!"
         aggregateHash = ""
         body = "<p><b>Vaccination Sites Availabile:</b><br>Schedule on <a href=\"" + data['endpoint']['link'] + "\">" + data['endpoint']['name'] + "</a><br><br>"
         for site in sites:
-            line = site.availability()
+            line = str(site)
             body += line + "<br><br>"
             hashVal = hashlib.sha1(repr(line).encode('utf-8'))
             aggregateHash += hashVal.hexdigest()
@@ -47,6 +49,7 @@ def poll_availability():
     # create webdriver object
     options = Options()
     options.headless = True
+    geckodriver_autoinstaller.install() 
     driver = webdriver.Firefox(options=options)
 
     while True:
@@ -55,8 +58,7 @@ def poll_availability():
             driver.get(TURBO_VAX_URL)
             time.sleep(0.2) # Need a fraction of a second for the page to execute js 
             result = driver.find_element_by_css_selector('div.MuiBox-root.jss14')
-            status = result.text.replace('(', '') 
-            status = result.text.replace(')', '')
+            status = result.text.replace('(', '').replace(')', '')
             print(status.split(" "))
 
             # If not not available, continue loop
@@ -78,41 +80,5 @@ def poll_availability():
         except KeyboardInterrupt:
             driver.quit()
             sys.exit()
-    
-    """
-    while True:
-        try:
-            session = HTMLSession()
-            response = session.get(TURBO_VAX_URL)
-            wait = response.html.render()
-            pg = response.html.text
-            availability = response.html.xpath('//*[@id="root"]/div/div[2]/div/div[3]/div[1]/div/div/div/div[2]/div/p')[0].full_text
-            print(availability)
-            # TODO - StateManager.set_state(state) (state = 'Available' or 'Not Available')
-            session.close()
-            time.sleep(5)
-
-        except KeyboardInterrupt:
-            session.close()
-            sys.exit()
-    """
-
 if __name__ == "__main__":
-    with open("config.json",'r') as fh:
-        data = fh.read()
-        data = json.loads(data)
-        subject = "New Vaccine Appointments!"
-        body = "New appointments for the covid vaccine are available at CVS! Schedule them here: <link_to_cvs_website>"
-        #send_email(data['username'], data['password'], data['receivers'], subject, body)
-
         poll_availability()
-"""
-    while True:
-        try:
-            #result = check_availability()
-            #print(result)
-            send_email()
-            time.sleep(5)
-        except KeyboardInterrupt:
-            sys.exit()
-"""
