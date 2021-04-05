@@ -29,7 +29,7 @@ class VaccinationSite(object):
 
 def determineState(sites):
     with open("config.json",'r') as fh:
-        data = json.loads(data)
+        data = json.loads(fh)
         subject = "New Vaccine Appointments!"
         body = "<p><b>Vaccination Sites Availabile:</b><br>Schedule on <a href=\"" + data['endpoint']['link'] + "\">" + data['endpoint']['name'] + "</a><br><br>"
        
