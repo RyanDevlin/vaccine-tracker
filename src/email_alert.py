@@ -28,6 +28,6 @@ def email(account, password, receivers, subject, body):
         server.close()
         print('successfully sent the mail')
     except Exception as e:
-        print("failed to send mail")
-        print(e)
+        import traceback
+        traceback.format_exc()
 
