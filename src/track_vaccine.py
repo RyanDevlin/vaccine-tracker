@@ -22,14 +22,15 @@ class VaccinationSite(object):
         self.numAvailable = numAvailable
 
     def __str__(self):
-        return("{} in {} currently has appointment(s) available".format(self.name,self.neighborhood))
+        return("{} in {} currently has {} appointment(s) available  at {}".format(self.name,self.neighborhood,self.numAvailable,self.time))
     
     def __eq__(self, other):
         return self.name == other.name
 
 def determineState(sites):
     with open("config.json",'r') as fh:
-        data = json.loads(fh)
+        data = fh.read()
+        data = json.loads(data)
         subject = "New Vaccine Appointments!"
         body = "<p><b>Vaccination Sites Availabile:</b><br>Schedule on <a href=\"" + data['endpoint']['link'] + "\">" + data['endpoint']['name'] + "</a><br><br>"
        
