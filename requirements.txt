@@ -1,3 +1,4 @@
+geckodriver-autoinstaller==0.1.0
 urllib3==1.25.8
 requests-html==0.10.0
 pyppeteer==0.2.2
