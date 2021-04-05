@@ -1,0 +1,9 @@
+{
+    "username": "sender@gmail.com",
+    "password": "<base64_encoded_gmail_password>",
+    "receivers": "test@gmail.com,temp@gmail.com",
+    "endpoint": {
+      "link": "https://www.turbovax.info/",
+      "name": "TurboVax"
+    }
+}

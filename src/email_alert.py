@@ -13,18 +13,15 @@ def email(account, password, receivers, subject, body):
     msg['From'] = account
     msg['To'] = receivers
     msg.add_header('Content-Type','text/html')
-
     msg.set_payload(body)
 
     # Prepare actual message
-    
-    
     try:
         server = smtplib.SMTP("smtp.gmail.com", 587)
         server.ehlo()
         server.starttls()
         server.login(account, decode_pass)
-        server.sendmail(msg['From'], msg['To'], msg.as_string())
+        server.sendmail(msg['From'], receivers.split(','), msg.as_string())
         server.close()
         print('successfully sent the mail')
     except Exception as e:

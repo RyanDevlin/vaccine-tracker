@@ -3,16 +3,13 @@
 class StateManager(object):
     """Class to Manage State in Memory"""
 
-    State = "b6ee60926c0a426addcbb7e087d4274498f35b1c" # Sha1 hash of the empty list, used as default
+    State = []
 
     @classmethod
     def set_state(cls, newState, handler):
         """Set State in memory and send alerts (email, smsg, etc)"""
-        if len(newState) != 40:
-            print("LENGTH: ", len(newState))
-            raise RuntimeError('State {} is not a hash legnth 40'.format(newState))
 
-        if newState != cls.State:
+        if any([state for state in newState if state not in cls.State]):
             # TODO - send email/smsg alert
             print("Detected new state! Sending email.")
             handler()

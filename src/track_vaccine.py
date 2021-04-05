@@ -23,58 +23,17 @@ class VaccinationSite(object):
 
     def __str__(self):
         return("{} in {} currently has appointment(s) available".format(self.name,self.neighborhood))
+    
+    def __eq__(self, other):
+        return self.name == other.name
 
 def determineState(sites):
     with open("config.json",'r') as fh:
-        data = fh.read()
-        print(data)
         data = json.loads(data)
         subject = "New Vaccine Appointments!"
-        aggregateHash = ""
         body = "<p><b>Vaccination Sites Availabile:</b><br>Schedule on <a href=\"" + data['endpoint']['link'] + "\">" + data['endpoint']['name'] + "</a><br><br>"
-        for site in sites:
-            line = site.availability()
-            body += line + "<br><br>"
-            hashVal = hashlib.sha1(repr(line).encode('utf-8'))
-            aggregateHash += hashVal.hexdigest()
-        body + "</p>"
-        result = hashlib.sha1(repr(aggregateHash).encode('utf-8'))
-        state = result.hexdigest()
 
-        #send_email(data['username'], data['password'], data['receivers'], subject, body)
-        StateManager.set_state(state,lambda: email(data['username'], data['password'], data['receivers'], subject, body))
-    print("STATE: ", StateManager.State)
-
-class VaccinationSite(object):
-    empCount = 0
-    def __init__(self, name, neighborhood, numAvailable, time):
-        self.name = name
-        self.neighborhood = neighborhood
-        self.time = time # Formatted like Apr 8 - 1:15PM
-        self.numAvailable = numAvailable
-    def availability(self):
-        return("{} in {} currently has {} appointment(s) available at {}".format(self.name,self.neighborhood,self.numAvailable, self.time))
-
-def determineState(sites):
-    with open("config.json",'r') as fh:
-        data = fh.read()
-        data = json.loads(data)
-        subject = "New Vaccine Appointments!"
-        aggregateHash = ""
-        body = "<p><b>Vaccination Sites Availabile:</b><br>Schedule on <a href=\"" + data['endpoint']['link'] + "\">" + data['endpoint']['name'] + "</a><br>"
-        for site in sites:
-            line = site.availability()
-            line = str(site)
-            body += line + "<br><br>"
-            hashVal = hashlib.sha1(repr(line).encode('utf-8'))
-            aggregateHash += hashVal.hexdigest()
-        body + "</p>"
-        result = hashlib.sha1(repr(aggregateHash).encode('utf-8'))
-        state = result.hexdigest()
-
-        #send_email(data['username'], data['password'], data['receivers'], subject, body)
-        StateManager.set_state(state,lambda: email(data['username'], data['password'], data['receivers'], subject, body))
-    print("STATE: ", StateManager.State)
+        StateManager.set_state(sites,lambda: email(data['username'], data['password'], data['receivers'], subject, body))
 
 def poll_availability():
     # create webdriver object
